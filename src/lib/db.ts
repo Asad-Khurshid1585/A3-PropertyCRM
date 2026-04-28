@@ -1,8 +1,6 @@
 import mongoose from "mongoose";
 import { getEnv } from "@/lib/env";
 
-const MONGODB_URI = getEnv().MONGODB_URI;
-
 declare global {
   var mongooseConn:
     | {
@@ -21,12 +19,14 @@ const MONGODB_OPTIONS = {
 };
 
 export async function connectToDatabase() {
+  const { MONGODB_URI } = getEnv();
+  
   if (cached.conn) {
     return cached.conn;
   }
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI, {
+    cached.promise = mongoose.connect(MONGODB_URI!, {
       dbName: "property_dealer_crm",
       ...MONGODB_OPTIONS,
     });
