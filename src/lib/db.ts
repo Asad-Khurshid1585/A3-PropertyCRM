@@ -21,6 +21,12 @@ const MONGODB_OPTIONS = {
 export async function connectToDatabase() {
   const { MONGODB_URI } = getEnv();
   
+  if (!MONGODB_URI || MONGODB_URI.trim() === "") {
+    throw new Error("MONGODB_URI environment variable is not set");
+  }
+  
+  console.log("[DB] Connecting to MongoDB...");
+  
   if (cached.conn) {
     return cached.conn;
   }
