@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: property-dealer-crm-app
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      APP_URL: http://localhost:3000
+      MONGODB_URI: mongodb://mongo:27017/property_dealer_crm
+      JWT_SECRET: change_this_super_secret_key
+      JWT_EXPIRES_IN: 7d
+      ADMIN_EMAIL: admin@crm.local
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      SMTP_USER: ""
+      SMTP_PASS: ""
+      EMAIL_FROM: crm@example.com
+    depends_on:
+      - mongo
+      - mailhog
+
+  mongo:
+    image: mongo:7
+    container_name: property-dealer-crm-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: property-dealer-crm-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  mongo_data:
