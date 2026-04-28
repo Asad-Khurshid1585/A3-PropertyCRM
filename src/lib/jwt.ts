@@ -40,7 +40,7 @@ export const decodeToken = (token: string): AuthTokenPayload | null => {
 };
 
 export const getTokenExpiry = (token: string): Date | null => {
-  const decoded = decodeToken(token);
+  const decoded = jwt.decode(token) as { exp?: number } | null;
   if (!decoded?.exp) {
     return null;
   }

@@ -487,7 +487,7 @@ export function DashboardClient({ role }: DashboardClientProps) {
                 </tr>
               ) : (
                 filteredLeads.map((lead) => (
-                <tr key={lead.id} className="border-b border-[var(--surface-2)] align-top">
+                  <tr key={lead.id} className="border-b border-[var(--surface-2)] align-top">
                   <td className="p-2">
                     <button type="button" className="font-semibold underline" onClick={() => setSelectedLeadId(lead.id)}>
                       {lead.name}
@@ -539,7 +539,8 @@ export function DashboardClient({ role }: DashboardClientProps) {
                     )}
                   </td>
                 </tr>
-              ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>

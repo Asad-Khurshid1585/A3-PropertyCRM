@@ -1,7 +1,7 @@
 import { apiSuccess } from "@/lib/api";
 import { requireRole } from "@/lib/request-helpers";
 import { USER_ROLES } from "@/types";
-import LeadModel from "@/models/Lead";
+import { LeadModel } from "@/models/Lead";
 import { connectToDatabase } from "@/lib/db";
 
 const createCsvRow = (row: Record<string, unknown>) =>
@@ -73,7 +73,8 @@ export async function GET(request: Request) {
   const headers = new Headers();
   headers.set("Content-Type", "text/csv");
   headers.set(
-    "Content-Disposition": `attachment; filename="leads-${new Date().toISOString().slice(0, 10)}.csv"`
+    "Content-Disposition",
+    `attachment; filename="leads-${new Date().toISOString().slice(0, 10)}.csv"`
   );
 
   return new Response(csv, { status: 200, headers });
