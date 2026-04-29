@@ -1,8 +1,9 @@
-import { apiSuccess } from "@/lib/api";
+import { apiSuccess, apiError } from "@/lib/api";
 import { requireRole } from "@/lib/request-helpers";
 import { USER_ROLES } from "@/types";
 import { LeadModel } from "@/models/Lead";
 import { connectToDatabase } from "@/lib/db";
+import { getAuthPayloadFromRequest } from "@/lib/auth";
 
 const createCsvRow = (row: Record<string, unknown>) =>
   Object.values(row)
@@ -29,9 +30,12 @@ const CSV_HEADERS = [
 ].join(",");
 
 export async function GET(request: Request) {
-  const auth = requireRole(request as never, [USER_ROLES.ADMIN]);
-  if (!auth.payload) {
-    return auth.error;
+  const auth = getAuthPayloadFromRequest(request as never);
+  if (!auth || !auth.role) {
+    return apiError("Unauthorized", 401);
+  }
+  if (auth.role !== USER_ROLES.ADMIN) {
+    return apiError("Forbidden", 403);
   }
 
   await connectToDatabase();
