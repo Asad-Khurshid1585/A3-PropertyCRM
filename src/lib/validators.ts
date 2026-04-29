@@ -33,6 +33,7 @@ export const leadCreateSchema = z.object({
   assignedTo: z.string().optional(),
   source: z.string().min(2).max(50),
   followUpDate: z.string().datetime().optional(),
+  lastActivityAt: z.string().datetime().optional(),
 });
 
 export const leadUpdateSchema = z.object({

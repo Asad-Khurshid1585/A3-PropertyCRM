@@ -76,6 +76,7 @@ export function DashboardClient({ role }: DashboardClientProps) {
     source: "facebook_ads",
     notes: "",
     assignedTo: "",
+    lastActivityAt: "",
   });
 
   const [editingId, setEditingId] = useState("");
@@ -284,6 +285,7 @@ export function DashboardClient({ role }: DashboardClientProps) {
           ...newLead,
           budget: Number(newLead.budget),
           assignedTo: newLead.assignedTo || undefined,
+          lastActivityAt: newLead.lastActivityAt ? new Date(newLead.lastActivityAt).toISOString() : undefined,
         }),
       });
 
@@ -296,6 +298,7 @@ export function DashboardClient({ role }: DashboardClientProps) {
         source: "facebook_ads",
         notes: "",
         assignedTo: "",
+        lastActivityAt: "",
       });
 
       await Promise.all([loadLeads(), loadAnalytics(), loadFollowups()]);
@@ -599,6 +602,13 @@ export function DashboardClient({ role }: DashboardClientProps) {
                 <option key={agent.id} value={agent.id}>{agent.name}</option>
               ))}
             </select>
+            <input
+              className="crm-input"
+              type="date"
+              title="Last activity date (leave empty for now)"
+              value={newLead.lastActivityAt}
+              onChange={(event) => setNewLead((prev) => ({ ...prev, lastActivityAt: event.target.value }))}
+            />
             <button className="crm-button" type="submit">Add Lead</button>
           </form>
         </section>

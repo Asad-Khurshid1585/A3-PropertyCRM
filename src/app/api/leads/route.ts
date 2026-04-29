@@ -143,6 +143,9 @@ export async function POST(request: NextRequest) {
     followUpDate: parsed.data.followUpDate
       ? new Date(parsed.data.followUpDate)
       : null,
+    lastActivityAt: parsed.data.lastActivityAt
+      ? new Date(parsed.data.lastActivityAt)
+      : new Date(),
   });
 
   await logLeadActivity({
