@@ -186,13 +186,9 @@ export function DashboardClient({ role }: DashboardClientProps) {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      void Promise.all([loadLeads(), loadAgents(), loadAnalytics(), loadFollowups()]);
-    }, 0);
-
-    return () => clearTimeout(timer);
+    void Promise.all([loadLeads(), loadAgents(), loadAnalytics(), loadFollowups()]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
+  }, [query, role]);
 
   useEffect(() => {
     if (selectedLeadId) {
@@ -207,7 +203,7 @@ export function DashboardClient({ role }: DashboardClientProps) {
   useEffect(() => {
     const id = setInterval(() => {
       void pollEvents();
-    }, 7000);
+    }, 3000);
 
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
