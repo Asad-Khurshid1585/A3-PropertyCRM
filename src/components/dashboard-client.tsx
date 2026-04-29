@@ -158,19 +158,24 @@ export function DashboardClient({ role }: DashboardClientProps) {
   };
 
   const importProperties = async () => {
-    if (!importFile) return;
+    if (!importFile) {
+      setError("Please select a file first");
+      return;
+    }
     try {
-      const text = await importFile.text();
+      const formData = new FormData();
+      formData.append("file", importFile);
+      
       const response = await fetch("/api/properties", {
         method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: text,
+        body: formData,
       });
       const body = await response.json();
       if (!body.success) {
         setError(body.error || "Import failed");
         return;
       }
+      alert(`Successfully imported ${body.data.count} properties`);
       setShowImportModal(false);
       setImportFile(null);
       await loadProperties();

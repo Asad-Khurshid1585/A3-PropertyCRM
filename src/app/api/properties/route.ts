@@ -105,7 +105,20 @@ export async function POST(request: NextRequest) {
 
   await connectToDatabase();
 
-  const text = await request.text();
+  let text: string;
+  const contentType = request.headers.get("content-type") || "";
+  
+  if (contentType.includes("multipart/form-data")) {
+    const formData = await request.formData();
+    const file = formData.get("file") as File | null;
+    if (!file) {
+      return apiError("No file provided", 400);
+    }
+    text = await file.text();
+  } else {
+    text = await request.text();
+  }
+
   const lines = text.trim().split("\n");
   
   if (lines.length < 2) {
