@@ -351,15 +351,52 @@ export function DashboardClient({ role }: DashboardClientProps) {
             </div>
           </div>
           <div className="crm-card p-4 md:col-span-2">
-            <p className="text-sm font-semibold">Agent Performance</p>
-            <div className="mt-2 space-y-2 text-sm">
-              {analytics.agentPerformance.length === 0 && <p>No assigned leads yet.</p>}
-              {analytics.agentPerformance.map((item) => (
-                <div key={item.agentId} className="rounded-lg bg-[var(--surface-2)] p-2">
-                  <p className="font-semibold">{item.agentName}</p>
-                  <p>{item.totalHandled} leads handled</p>
-                </div>
-              ))}
+            <p className="text-sm font-semibold">Agent Performance (Ranked by Wins)</p>
+            <div className="mt-3 space-y-3">
+              {(() => {
+                const sorted = [...analytics.agentPerformance]
+                  .map(agent => {
+                    const won = agent.statuses.find(s => s.status === "closed")?.count || 0;
+                    const lost = agent.totalHandled - won;
+                    return { ...agent, won, lost };
+                  })
+                  .sort((a, b) => b.won - a.won);
+
+                if (sorted.length === 0) return <p className="text-sm">No assigned leads yet.</p>;
+
+                const maxTotal = Math.max(...sorted.map(s => s.totalHandled), 1);
+
+                return sorted.map((agent, idx) => (
+                  <div key={agent.agentId} className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-bold w-5 h-5 flex items-center justify-center rounded ${
+                          idx === 0 ? "bg-amber-500 text-black" : 
+                          idx === 1 ? "bg-gray-400 text-black" : 
+                          idx === 2 ? "bg-orange-700 text-white" : 
+                          "bg-[var(--surface-2)] text-[var(--muted)]"
+                        }`}>
+                          {idx + 1}
+                        </span>
+                        <span className="font-semibold text-sm">{agent.agentName}</span>
+                      </div>
+                      <div className="text-xs text-[var(--muted)]">
+                        <span className="text-green-400">{agent.won} won</span> · <span className="text-red-400">{agent.lost} lost</span> · {agent.totalHandled} total
+                      </div>
+                    </div>
+                    <div className="h-4 flex rounded overflow-hidden bg-[var(--surface-2)]">
+                      <div 
+                        className="bg-green-500 transition-all" 
+                        style={{ width: `${(agent.won / maxTotal) * 100}%` }}
+                      />
+                      <div 
+                        className="bg-red-500 transition-all" 
+                        style={{ width: `${(agent.lost / maxTotal) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         </section>
