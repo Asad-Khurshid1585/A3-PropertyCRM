@@ -199,6 +199,11 @@ export function DashboardClient({ role }: DashboardClientProps) {
     setActivities(data.activities);
   };
 
+  const loadAllActivities = async () => {
+    const data = await fetchJSON<{ activities: ActivityItem[] }>("/api/activities");
+    setActivities(data.activities);
+  };
+
   const pollEvents = async () => {
     const url = eventsSince ? `/api/events?since=${encodeURIComponent(eventsSince)}` : "/api/events";
     const data = await fetchJSON<{ events: { createdAt: string }[]; serverTime: string }>(
@@ -206,7 +211,7 @@ export function DashboardClient({ role }: DashboardClientProps) {
     );
 
     if (data.events.length > 0) {
-      await Promise.all([loadLeads(), loadFollowups(), role === "admin" ? loadAnalytics() : Promise.resolve()]);
+      await Promise.all([loadLeads(), loadFollowups(), loadAllActivities(), role === "admin" ? loadAnalytics() : Promise.resolve()]);
       if (selectedLeadId) {
         await loadActivities(selectedLeadId);
       }
@@ -216,7 +221,7 @@ export function DashboardClient({ role }: DashboardClientProps) {
   };
 
   useEffect(() => {
-    void Promise.all([loadLeads(), loadAgents(), loadAnalytics(), loadFollowups()]);
+    void Promise.all([loadLeads(), loadAgents(), loadAnalytics(), loadFollowups(), loadAllActivities()]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, role]);
 
@@ -604,21 +609,17 @@ export function DashboardClient({ role }: DashboardClientProps) {
       </section>
 
       <section className="crm-card p-4">
-        <h2 className="text-lg font-bold">Lead Activity Timeline</h2>
-        {selectedLeadId ? (
-          <div className="mt-3 space-y-3">
-            {activities.map((item) => (
-              <div key={item.id} className="rounded-lg border border-[var(--surface-2)] p-3">
-                <p className="text-xs text-[var(--muted)]">{new Date(item.createdAt).toLocaleString()}</p>
-                <p className="font-semibold">{item.description}</p>
-                <p className="text-xs text-[var(--muted)]">By: {item.actor?.name || "System"}</p>
-              </div>
-            ))}
-            {activities.length === 0 && <p className="text-sm">No activity for this lead yet.</p>}
-          </div>
-        ) : (
-          <p className="mt-2 text-sm">Select a lead to view timeline.</p>
-        )}
+        <h2 className="text-lg font-bold">Activity Log</h2>
+        <div className="mt-3 space-y-3 max-h-96 overflow-y-auto">
+          {activities.map((item) => (
+            <div key={item.id} className="rounded-lg border border-[var(--surface-2)] p-3">
+              <p className="text-xs text-[var(--muted)]">{new Date(item.createdAt).toLocaleString()}</p>
+              <p className="font-semibold">{item.description}</p>
+              <p className="text-xs text-[var(--muted)]">By: {item.actor?.name || "System"}</p>
+            </div>
+          ))}
+          {activities.length === 0 && <p className="text-sm">No activity yet.</p>}
+        </div>
       </section>
     </div>
   );
