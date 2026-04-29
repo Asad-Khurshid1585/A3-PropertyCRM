@@ -44,10 +44,17 @@ export async function GET(request: Request) {
   const format = url.searchParams.get("format") || "csv";
   const status = url.searchParams.get("status");
   const priority = url.searchParams.get("priority");
+  const dateFrom = url.searchParams.get("dateFrom");
+  const dateTo = url.searchParams.get("dateTo");
 
   const query: Record<string, unknown> = {};
   if (status) query.status = status;
   if (priority) query.score = priority;
+  if (dateFrom || dateTo) {
+    query.createdAt = {};
+    if (dateFrom) (query.createdAt as Record<string, Date>).$gte = new Date(dateFrom);
+    if (dateTo) (query.createdAt as Record<string, Date>).$lte = new Date(dateTo);
+  }
 
   if (auth.role === USER_ROLES.AGENT) {
     query.assignedTo = auth.sub;

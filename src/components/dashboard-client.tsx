@@ -189,7 +189,14 @@ export function DashboardClient({ role }: DashboardClientProps) {
 
   const exportLeads = async (format: "csv" | "json") => {
     try {
-      const response = await fetch(`/api/leads/export?format=${format}`, { credentials: "include" });
+      const params = new URLSearchParams();
+      params.set("format", format);
+      if (statusFilter) params.set("status", statusFilter);
+      if (priorityFilter) params.set("priority", priorityFilter);
+      if (dateFrom) params.set("dateFrom", dateFrom);
+      if (dateTo) params.set("dateTo", dateTo);
+
+      const response = await fetch(`/api/leads/export?${params}`, { credentials: "include" });
       if (!response.ok) {
         const body = await response.json();
         alert(body.error || "Export failed");
