@@ -25,7 +25,8 @@ export const leadCreateSchema = z.object({
       LEAD_STATUS.CONTACTED,
       LEAD_STATUS.ASSIGNED,
       LEAD_STATUS.IN_PROGRESS,
-      LEAD_STATUS.CLOSED,
+      LEAD_STATUS.CLOSED_WON,
+      LEAD_STATUS.CLOSED_LOST,
     ])
     .optional(),
   notes: z.string().max(500).optional(),
@@ -46,7 +47,8 @@ export const leadUpdateSchema = z.object({
       LEAD_STATUS.CONTACTED,
       LEAD_STATUS.ASSIGNED,
       LEAD_STATUS.IN_PROGRESS,
-      LEAD_STATUS.CLOSED,
+      LEAD_STATUS.CLOSED_WON,
+      LEAD_STATUS.CLOSED_LOST,
     ])
     .optional(),
   notes: z.string().max(500).optional(),
