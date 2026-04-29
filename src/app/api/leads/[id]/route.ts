@@ -9,6 +9,8 @@ import { toSafeLead } from "@/lib/lead-serializer";
 import { canAccessLead } from "@/lib/permissions";
 import { logLeadActivity } from "@/lib/activity";
 import { publishEvent } from "@/lib/realtime";
+import { sendEmail, leadUpdatedEmailTemplate } from "@/lib/email";
+import { getEnv } from "@/lib/env";
 
 type Params = { id: string };
 
@@ -185,6 +187,25 @@ export async function PATCH(
     leadId: lead._id.toString(),
     message: `${lead.name} was updated.`,
   });
+
+  const changes: string[] = [];
+  if (previousStatus !== lead.status) changes.push(`Status: ${previousStatus} → ${lead.status}`);
+  if (parsed.data.budget !== undefined) changes.push(`Budget: PKR ${lead.budget.toLocaleString()}`);
+  if (parsed.data.notes !== undefined && previousNotes !== lead.notes) changes.push("Notes updated");
+  if (parsed.data.followUpDate !== undefined) changes.push("Follow-up date updated");
+  if (previousScore !== lead.score) changes.push(`Priority: ${previousScore} → ${lead.score}`);
+
+  if (changes.length > 0) {
+    await sendEmail({
+      to: getEnv().ADMIN_EMAIL,
+      subject: `Lead Updated: ${lead.name}`,
+      html: leadUpdatedEmailTemplate({
+        leadName: lead.name,
+        updatedBy: auth.payload.name,
+        changes: changes.join(", "),
+      }),
+    });
+  }
 
   const withAssignment = await LeadModel.findById(lead._id).populate(
     "assignedTo",

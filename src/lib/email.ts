@@ -78,3 +78,25 @@ export const assignedLeadEmailTemplate = ({
     </div>
   `;
 };
+
+export const leadUpdatedEmailTemplate = ({
+  leadName,
+  updatedBy,
+  changes,
+}: {
+  leadName: string;
+  updatedBy: string;
+  changes: string;
+}) => {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #0f3d3e;">Lead Updated</h2>
+      <p>A lead has been updated in the CRM.</p>
+      <ul>
+        <li><strong>Lead:</strong> ${leadName}</li>
+        <li><strong>Updated By:</strong> ${updatedBy}</li>
+        <li><strong>Changes:</strong> ${changes}</li>
+      </ul>
+    </div>
+  `;
+};
