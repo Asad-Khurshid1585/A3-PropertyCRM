@@ -163,7 +163,7 @@ export function DashboardClient({ role }: DashboardClientProps) {
       const text = await importFile.text();
       const response = await fetch("/api/properties", {
         method: "POST",
-        headers: { "Content-Type": "text/csv" },
+        headers: { "Content-Type": "text/plain" },
         body: text,
       });
       const body = await response.json();

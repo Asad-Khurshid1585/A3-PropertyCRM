@@ -6,27 +6,6 @@ import { PropertyModel } from "@/models/Property";
 import { USER_ROLES, PROPERTY_STATUS, PROPERTY_TYPE } from "@/types";
 import { publishEvent } from "@/lib/realtime";
 
-function parseCSV(text: string): Record<string, string>[] {
-  const lines = text.trim().split("\n");
-  if (lines.length < 2) return [];
-
-  const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
-  const results: Record<string, string>[] = [];
-
-  for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(",").map((v) => v.trim());
-    const obj: Record<string, string> = {};
-    headers.forEach((header, index) => {
-      obj[header] = values[index] || "";
-    });
-    if (Object.values(obj).some((v) => v)) {
-      results.push(obj);
-    }
-  }
-
-  return results;
-}
-
 function toSafeProperty(property: {
   _id: { toString(): string };
   title: string;
@@ -126,55 +105,68 @@ export async function POST(request: NextRequest) {
 
   await connectToDatabase();
 
-  const contentType = request.headers.get("content-type") || "";
-
-  if (contentType.includes("text/csv") || contentType.includes("text/plain")) {
-    const text = await request.text();
-    const records = parseCSV(text);
-
-    if (records.length === 0) {
-      return apiError("No valid data found in CSV", 400);
-    }
-
-    const properties = [];
-
-    for (const record of records) {
-      const type = record.type?.toLowerCase() || "house";
-      const validType = Object.values(PROPERTY_TYPE).includes(type as typeof PROPERTY_TYPE[keyof typeof PROPERTY_TYPE])
-        ? type
-        : PROPERTY_TYPE.HOUSE;
-
-      properties.push({
-        title: record.title || record.name || "Untitled Property",
-        address: record.address || "",
-        type: validType,
-        price: parseFloat(record.price) || 0,
-        area: parseFloat(record.area || record.size || "0") || 0,
-        bedrooms: parseInt(record.bedrooms || record.beds || "0") || 0,
-        bathrooms: parseInt(record.bathrooms || record.baths || "0") || 0,
-        description: record.description || record.notes || "",
-        status: PROPERTY_STATUS.AVAILABLE,
-      });
-    }
-
-    const created = await PropertyModel.insertMany(properties);
-
-    for (const prop of created) {
-      publishEvent({
-        type: "lead_created",
-        leadId: prop._id.toString(),
-        message: `Property ${prop.title} imported.`,
-      });
-    }
-
-    return apiSuccess(
-      {
-        message: `${created.length} properties imported successfully`,
-        count: created.length,
-      },
-      201,
-    );
+  const text = await request.text();
+  const lines = text.trim().split("\n");
+  
+  if (lines.length < 2) {
+    return apiError("CSV file is empty or invalid", 400);
   }
 
-  return apiError("Invalid content type. Expected CSV.", 400);
+  const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+  const results: Record<string, string>[] = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const values = lines[i].split(",").map((v) => v.trim());
+    const obj: Record<string, string> = {};
+    headers.forEach((header, index) => {
+      obj[header] = values[index] || "";
+    });
+    if (Object.values(obj).some((v) => v)) {
+      results.push(obj);
+    }
+  }
+
+  if (results.length === 0) {
+    return apiError("No valid data found in CSV", 400);
+  }
+
+  const properties = [];
+
+  for (const record of results) {
+    const type = record.type?.toLowerCase() || "house";
+    const validType = Object.values(PROPERTY_TYPE).includes(type as typeof PROPERTY_TYPE[keyof typeof PROPERTY_TYPE])
+      ? type
+      : PROPERTY_TYPE.HOUSE;
+
+    properties.push({
+      title: record.title || record.name || "Untitled Property",
+      address: record.address || "",
+      type: validType,
+      price: parseFloat(record.price) || 0,
+      area: parseFloat(record.area || record.size || "0") || 0,
+      bedrooms: parseInt(record.bedrooms || record.beds || "0") || 0,
+      bathrooms: parseInt(record.bathrooms || record.baths || "0") || 0,
+      description: record.description || record.notes || "",
+      status: PROPERTY_STATUS.AVAILABLE,
+    });
+  }
+
+  const created = await PropertyModel.insertMany(properties);
+
+  for (const prop of created) {
+    publishEvent({
+      type: "lead_created",
+      leadId: prop._id.toString(),
+      message: `Property ${prop.title} imported.`,
+    });
+  }
+
+  return apiSuccess(
+    {
+      message: `${created.length} properties imported successfully`,
+      count: created.length,
+    },
+    201,
+  );
 }
