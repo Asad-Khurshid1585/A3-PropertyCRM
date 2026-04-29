@@ -34,7 +34,7 @@ export async function GET(request: Request) {
   if (!auth || !auth.role) {
     return apiError("Unauthorized", 401);
   }
-  if (auth.role !== USER_ROLES.ADMIN) {
+  if (auth.role !== USER_ROLES.ADMIN && auth.role !== USER_ROLES.AGENT) {
     return apiError("Forbidden", 403);
   }
 
@@ -48,6 +48,10 @@ export async function GET(request: Request) {
   const query: Record<string, unknown> = {};
   if (status) query.status = status;
   if (priority) query.score = priority;
+
+  if (auth.role === USER_ROLES.AGENT) {
+    query.assignedTo = auth.sub;
+  }
 
   const leads = await LeadModel.find(query)
     .populate("assignedTo", "name")

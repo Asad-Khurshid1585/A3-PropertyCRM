@@ -187,8 +187,26 @@ export function DashboardClient({ role }: DashboardClientProps) {
     setAiSuggestions(data.suggestions || []);
   };
 
-  const exportLeads = (format: "csv" | "json") => {
-    window.open(`/api/leads/export?format=${format}`, "_blank");
+  const exportLeads = async (format: "csv" | "json") => {
+    try {
+      const response = await fetch(`/api/leads/export?format=${format}`, { credentials: "include" });
+      if (!response.ok) {
+        const body = await response.json();
+        alert(body.error || "Export failed");
+        return;
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `leads-${new Date().toISOString().slice(0, 10)}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    } catch (err) {
+      alert("Export failed: " + (err instanceof Error ? err.message : "Unknown error"));
+    }
   };
 
   const loadActivities = async (leadId: string) => {
@@ -428,7 +446,7 @@ export function DashboardClient({ role }: DashboardClientProps) {
       </section>
 
       <section className="flex gap-2">
-        <button className="crm-button" onClick={() => exportLeads("csv")}>
+        <button className="crm-button" onClick={() => void exportLeads("csv")}>
           Export CSV
         </button>
         <button className="crm-button" onClick={() => loadAiSuggestions()}>
