@@ -58,7 +58,9 @@ export async function POST(request: NextRequest) {
     leadId: lead._id.toString(),
     actorId: auth.payload.sub,
     type: isReassigned ? ACTIVITY_TYPES.REASSIGNED : ACTIVITY_TYPES.ASSIGNED,
-    description: `${isReassigned ? "Reassigned" : "Assigned"} lead to ${agent.name}.`,
+    description: isReassigned 
+      ? `Lead ${lead.name} reassigned to ${agent.name}.`
+      : `New lead ${lead.name} assigned to ${agent.name}.`,
     metadata: {
       assignedTo: agent._id.toString(),
     },

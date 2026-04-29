@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
     leadId: lead._id.toString(),
     actorId: auth.payload.sub,
     type: ACTIVITY_TYPES.CREATED,
-    description: `Lead ${lead.name} created from ${lead.source}.`,
+    description: `New lead ${lead.name} created from ${lead.source}.`,
     metadata: {
       source: lead.source,
       status: lead.status,
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
       leadId: lead._id.toString(),
       actorId: auth.payload.sub,
       type: ACTIVITY_TYPES.ASSIGNED,
-      description: `Lead assigned to ${assignedAgent.name}.`,
+      description: `New lead assigned to ${assignedAgent.name}.`,
       metadata: {
         assignedTo: assignedAgent._id.toString(),
       },

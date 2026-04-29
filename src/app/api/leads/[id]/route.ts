@@ -138,7 +138,7 @@ export async function PATCH(
       leadId: lead._id.toString(),
       actorId: auth.payload.sub,
       type: ACTIVITY_TYPES.STATUS_CHANGED,
-      description: `Status changed from ${previousStatus} to ${lead.status}.`,
+      description: `Status changed for lead ${lead.name} from ${previousStatus} to ${lead.status}.`,
       metadata: {
         from: previousStatus,
         to: lead.status,
