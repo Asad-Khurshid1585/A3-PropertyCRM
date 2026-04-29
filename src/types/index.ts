@@ -70,3 +70,36 @@ export type SafeLead = {
   createdAt: string;
   updatedAt: string;
 };
+
+export const PROPERTY_STATUS = {
+  AVAILABLE: "available",
+  SOLD: "sold",
+  RENTED: "rented",
+} as const;
+
+export type PropertyStatus = (typeof PROPERTY_STATUS)[keyof typeof PROPERTY_STATUS];
+
+export const PROPERTY_TYPE = {
+  HOUSE: "house",
+  APARTMENT: "apartment",
+  PLOT: "plot",
+  COMMERCIAL: "commercial",
+} as const;
+
+export type PropertyType = (typeof PROPERTY_TYPE)[keyof typeof PROPERTY_TYPE];
+
+export type SafeProperty = {
+  id: string;
+  title: string;
+  address: string;
+  type: PropertyType;
+  price: number;
+  area: number;
+  bedrooms: number;
+  bathrooms: number;
+  description: string;
+  status: PropertyStatus;
+  assignedTo: SafeUser | null;
+  createdAt: string;
+  updatedAt: string;
+};

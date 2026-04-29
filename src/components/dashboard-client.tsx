@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { PriorityChip } from "@/components/priority-chip";
 import { StatusChip } from "@/components/status-chip";
 import { toWhatsappLink } from "@/lib/normalizers";
-import type { SafeLead } from "@/types";
+import type { SafeLead, SafeProperty } from "@/types";
 import type { ActivityItem, AgentUser, ApiResponse } from "@/lib/client-types";
 
 type DashboardClientProps = {
@@ -86,6 +86,12 @@ export function DashboardClient({ role }: DashboardClientProps) {
     budget: "",
   });
 
+  const [properties, setProperties] = useState<SafeProperty[]>([]);
+  const [propertyFilter, setPropertyFilter] = useState("");
+  const [propertyTypeFilter, setPropertyTypeFilter] = useState("");
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+
   const query = useMemo(() => {
     const params = new URLSearchParams();
     if (statusFilter) params.set("status", statusFilter);
@@ -142,6 +148,46 @@ export function DashboardClient({ role }: DashboardClientProps) {
     setFollowupSummary(data);
   };
 
+  const loadProperties = async () => {
+    const params = new URLSearchParams();
+    if (propertyFilter) params.set("status", propertyFilter);
+    if (propertyTypeFilter) params.set("type", propertyTypeFilter);
+    const qs = params.toString();
+    const data = await fetchJSON<{ properties: SafeProperty[] }>(`/api/properties${qs ? `?${qs}` : ""}`);
+    setProperties(data.properties);
+  };
+
+  const importProperties = async () => {
+    if (!importFile) return;
+    try {
+      const text = await importFile.text();
+      const response = await fetch("/api/properties", {
+        method: "POST",
+        headers: { "Content-Type": "text/csv" },
+        body: text,
+      });
+      const body = await response.json();
+      if (!body.success) {
+        setError(body.error || "Import failed");
+        return;
+      }
+      setShowImportModal(false);
+      setImportFile(null);
+      await loadProperties();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Import failed");
+    }
+  };
+
+  const assignProperty = async (propertyId: string, agentId: string) => {
+    if (!agentId) return;
+    await fetchJSON<{ message: string }>("/api/properties/assign", {
+      method: "POST",
+      body: JSON.stringify({ propertyId, agentId }),
+    });
+    await loadProperties();
+  };
+
   const loadAiSuggestions = async () => {
     setShowSuggestions(true);
     const data = await fetchJSON<{
@@ -189,6 +235,11 @@ export function DashboardClient({ role }: DashboardClientProps) {
     void Promise.all([loadLeads(), loadAgents(), loadAnalytics(), loadFollowups()]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, role]);
+
+  useEffect(() => {
+    void loadProperties();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propertyFilter, propertyTypeFilter, role]);
 
   useEffect(() => {
     if (selectedLeadId) {
@@ -535,6 +586,108 @@ export function DashboardClient({ role }: DashboardClientProps) {
                     )}
                   </td>
                 </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="crm-card p-4">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <h2 className="text-lg font-bold">Properties</h2>
+          {role === "admin" && (
+            <button className="crm-button ml-auto" onClick={() => setShowImportModal(true)}>
+              Import CSV
+            </button>
+          )}
+        </div>
+
+        {showImportModal && (
+          <div className="mb-4 rounded-lg border border-[var(--brand)] p-4">
+            <p className="mb-2 font-semibold">Import Properties from CSV</p>
+            <input
+              type="file"
+              accept=".csv"
+              className="crm-input mb-2"
+              onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+            />
+            <div className="flex gap-2">
+              <button className="crm-button" onClick={importProperties}>Import</button>
+              <button className="crm-button" onClick={() => { setShowImportModal(false); setImportFile(null); }}>Cancel</button>
+            </div>
+          </div>
+        )}
+
+        <div className="mb-3 flex flex-wrap gap-2">
+          <select className="crm-input" value={propertyFilter} onChange={(e) => setPropertyFilter(e.target.value)}>
+            <option value="">All Statuses</option>
+            <option value="available">Available</option>
+            <option value="sold">Sold</option>
+            <option value="rented">Rented</option>
+          </select>
+          <select className="crm-input" value={propertyTypeFilter} onChange={(e) => setPropertyTypeFilter(e.target.value)}>
+            <option value="">All Types</option>
+            <option value="house">House</option>
+            <option value="apartment">Apartment</option>
+            <option value="plot">Plot</option>
+            <option value="commercial">Commercial</option>
+          </select>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px] text-left text-sm">
+            <thead>
+              <tr className="border-b border-[var(--surface-2)]">
+                <th className="p-2">Property</th>
+                <th className="p-2">Type</th>
+                <th className="p-2">Price</th>
+                <th className="p-2">Area</th>
+                <th className="p-2">Beds/Baths</th>
+                <th className="p-2">Status</th>
+                <th className="p-2">Assigned</th>
+                {role === "admin" && <th className="p-2">Actions</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {properties.length === 0 ? (
+                <tr>
+                  <td className="p-4 text-center" colSpan={role === "admin" ? 8 : 7}>
+                    No properties yet. Import from CSV (admin).
+                  </td>
+                </tr>
+              ) : (
+                properties.map((prop) => (
+                  <tr key={prop.id} className="border-b border-[var(--surface-2)]">
+                    <td className="p-2">
+                      <p className="font-semibold">{prop.title}</p>
+                      <p className="text-xs text-[var(--muted)]">{prop.address}</p>
+                    </td>
+                    <td className="p-2 capitalize">{prop.type}</td>
+                    <td className="p-2">PKR {prop.price.toLocaleString()}</td>
+                    <td className="p-2">{prop.area} sqft</td>
+                    <td className="p-2">{prop.bedrooms}/{prop.bathrooms}</td>
+                    <td className="p-2">
+                      <span className={`crm-chip ${
+                        prop.status === "available" ? "bg-green-100 text-green-700" :
+                        prop.status === "sold" ? "bg-red-100 text-red-700" :
+                        "bg-blue-100 text-blue-700"
+                      }`}>
+                        {prop.status}
+                      </span>
+                    </td>
+                    <td className="p-2">{prop.assignedTo?.name || "Unassigned"}</td>
+                    {role === "admin" && (
+                      <td className="p-2">
+                        <select className="crm-input" defaultValue="" onChange={(e) => void assignProperty(prop.id, e.target.value)}>
+                          <option value="">Assign agent</option>
+                          {agents.map((agent) => (
+                            <option key={agent.id} value={agent.id}>{agent.name}</option>
+                          ))}
+                        </select>
+                      </td>
+                    )}
+                  </tr>
                 ))
               )}
             </tbody>
