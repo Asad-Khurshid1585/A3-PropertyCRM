@@ -38,7 +38,7 @@ export async function GET(request: Request) {
   await connectToDatabase();
 
   const baseQuery: Record<string, unknown> = {
-    status: { $ne: LEAD_STATUS.CLOSED },
+    status: { $nin: [LEAD_STATUS.CLOSED_WON, LEAD_STATUS.CLOSED_LOST] },
   };
   if (auth.payload.role === USER_ROLES.AGENT) {
     baseQuery.assignedTo = auth.payload.sub;
