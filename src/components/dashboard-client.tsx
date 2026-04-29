@@ -86,9 +86,6 @@ export function DashboardClient({ role }: DashboardClientProps) {
     budget: "",
   });
 
-  const [properties, setProperties] = useState<SafeProperty[]>([]);
-  const [propertyFilter, setPropertyFilter] = useState("");
-  const [propertyTypeFilter, setPropertyTypeFilter] = useState("");
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
 
@@ -148,17 +145,7 @@ export function DashboardClient({ role }: DashboardClientProps) {
     setFollowupSummary(data);
   };
 
-  const loadProperties = async () => {
-    const params = new URLSearchParams();
-    if (propertyFilter) params.set("status", propertyFilter);
-    if (propertyTypeFilter) params.set("type", propertyTypeFilter);
-    const qs = params.toString();
-    const data = await fetchJSON<{ properties: SafeProperty[] }>(`/api/properties${qs ? `?${qs}` : ""}`);
-    setProperties(data.properties);
-  };
-
-  const importProperties = async () => {
-    console.log("Import clicked, file:", importFile);
+  const importLeads = async () => {
     if (!importFile) {
       alert("Please select a file first");
       return;
@@ -167,35 +154,22 @@ export function DashboardClient({ role }: DashboardClientProps) {
       const formData = new FormData();
       formData.append("file", importFile);
       
-      console.log("Sending request...");
       const response = await fetch("/api/properties", {
         method: "POST",
         body: formData,
       });
-      console.log("Response status:", response.status);
       const body = await response.json();
-      console.log("Response body:", body);
       if (!body.success) {
         alert(body.error || "Import failed");
         return;
       }
-      alert(`Successfully imported ${body.data.count} properties`);
+      alert(`Successfully imported ${body.data.count} leads`);
       setShowImportModal(false);
       setImportFile(null);
-      await loadProperties();
+      await loadLeads();
     } catch (err) {
-      console.error("Import error:", err);
       alert("Import failed: " + (err instanceof Error ? err.message : "Unknown error"));
     }
-  };
-
-  const assignProperty = async (propertyId: string, agentId: string) => {
-    if (!agentId) return;
-    await fetchJSON<{ message: string }>("/api/properties/assign", {
-      method: "POST",
-      body: JSON.stringify({ propertyId, agentId }),
-    });
-    await loadProperties();
   };
 
   const loadAiSuggestions = async () => {
@@ -245,11 +219,6 @@ export function DashboardClient({ role }: DashboardClientProps) {
     void Promise.all([loadLeads(), loadAgents(), loadAnalytics(), loadFollowups()]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, role]);
-
-  useEffect(() => {
-    void loadProperties();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [propertyFilter, propertyTypeFilter, role]);
 
   useEffect(() => {
     if (selectedLeadId) {
@@ -467,7 +436,38 @@ export function DashboardClient({ role }: DashboardClientProps) {
 
       {role === "admin" && (
         <section className="crm-card p-4">
-          <h2 className="text-lg font-bold">Create Lead</h2>
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <h2 className="text-lg font-bold">Create Lead</h2>
+            <button className="crm-button ml-auto" onClick={() => setShowImportModal(true)}>
+              Import CSV
+            </button>
+          </div>
+
+          {showImportModal && (
+            <div className="mb-4 rounded-lg border border-[var(--brand)] p-4">
+              <p className="mb-2 font-semibold">Import Leads from CSV</p>
+              <label className="block mb-2">
+                <span className="text-sm text-[var(--muted)]">Select CSV file:</span>
+                <input
+                  type="file"
+                  accept=".csv"
+                  className="block w-full mt-1 p-2 border border-[var(--surface-2)] rounded"
+                  onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                />
+              </label>
+              {importFile && <p className="text-sm mb-2">Selected: {importFile.name}</p>}
+              <div className="flex gap-2">
+                <button 
+                  className="crm-button" 
+                  onClick={() => importLeads()}
+                >
+                  Import
+                </button>
+                <button className="crm-button" onClick={() => { setShowImportModal(false); setImportFile(null); }}>Cancel</button>
+              </div>
+            </div>
+          )}
+
           <form className="mt-3 grid gap-3 md:grid-cols-2" onSubmit={createLead}>
             <input className="crm-input" placeholder="Name" required value={newLead.name} onChange={(event) => setNewLead((prev) => ({ ...prev, name: event.target.value }))} />
             <input className="crm-input" type="email" placeholder="Email" required value={newLead.email} onChange={(event) => setNewLead((prev) => ({ ...prev, email: event.target.value }))} />
@@ -596,117 +596,6 @@ export function DashboardClient({ role }: DashboardClientProps) {
                     )}
                   </td>
                 </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="crm-card p-4">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <h2 className="text-lg font-bold">Properties</h2>
-          {role === "admin" && (
-            <button className="crm-button ml-auto" onClick={() => setShowImportModal(true)}>
-              Import CSV
-            </button>
-          )}
-        </div>
-
-        {showImportModal && (
-          <div className="mb-4 rounded-lg border border-[var(--brand)] p-4">
-            <p className="mb-2 font-semibold">Import Properties from CSV</p>
-            <label className="block mb-2">
-              <span className="text-sm text-[var(--muted)]">Select CSV file:</span>
-              <input
-                type="file"
-                accept=".csv"
-                className="block w-full mt-1 p-2 border border-[var(--surface-2)] rounded"
-                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-              />
-            </label>
-            {importFile && <p className="text-sm mb-2">Selected: {importFile.name}</p>}
-            <div className="flex gap-2">
-              <button 
-                className="crm-button" 
-                onClick={() => importProperties()}
-              >
-                Import
-              </button>
-              <button className="crm-button" onClick={() => { setShowImportModal(false); setImportFile(null); }}>Cancel</button>
-            </div>
-          </div>
-        )}
-
-        <div className="mb-3 flex flex-wrap gap-2">
-          <select className="crm-input" value={propertyFilter} onChange={(e) => setPropertyFilter(e.target.value)}>
-            <option value="">All Statuses</option>
-            <option value="available">Available</option>
-            <option value="sold">Sold</option>
-            <option value="rented">Rented</option>
-          </select>
-          <select className="crm-input" value={propertyTypeFilter} onChange={(e) => setPropertyTypeFilter(e.target.value)}>
-            <option value="">All Types</option>
-            <option value="house">House</option>
-            <option value="apartment">Apartment</option>
-            <option value="plot">Plot</option>
-            <option value="commercial">Commercial</option>
-          </select>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left text-sm">
-            <thead>
-              <tr className="border-b border-[var(--surface-2)]">
-                <th className="p-2">Property</th>
-                <th className="p-2">Type</th>
-                <th className="p-2">Price</th>
-                <th className="p-2">Area</th>
-                <th className="p-2">Beds/Baths</th>
-                <th className="p-2">Status</th>
-                <th className="p-2">Assigned</th>
-                {role === "admin" && <th className="p-2">Actions</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {properties.length === 0 ? (
-                <tr>
-                  <td className="p-4 text-center" colSpan={role === "admin" ? 8 : 7}>
-                    No properties yet. Import from CSV (admin).
-                  </td>
-                </tr>
-              ) : (
-                properties.map((prop) => (
-                  <tr key={prop.id} className="border-b border-[var(--surface-2)]">
-                    <td className="p-2">
-                      <p className="font-semibold">{prop.title}</p>
-                      <p className="text-xs text-[var(--muted)]">{prop.address}</p>
-                    </td>
-                    <td className="p-2 capitalize">{prop.type}</td>
-                    <td className="p-2">PKR {prop.price.toLocaleString()}</td>
-                    <td className="p-2">{prop.area} sqft</td>
-                    <td className="p-2">{prop.bedrooms}/{prop.bathrooms}</td>
-                    <td className="p-2">
-                      <span className={`crm-chip ${
-                        prop.status === "available" ? "bg-green-100 text-green-700" :
-                        prop.status === "sold" ? "bg-red-100 text-red-700" :
-                        "bg-blue-100 text-blue-700"
-                      }`}>
-                        {prop.status}
-                      </span>
-                    </td>
-                    <td className="p-2">{prop.assignedTo?.name || "Unassigned"}</td>
-                    {role === "admin" && (
-                      <td className="p-2">
-                        <select className="crm-input" defaultValue="" onChange={(e) => void assignProperty(prop.id, e.target.value)}>
-                          <option value="">Assign agent</option>
-                          {agents.map((agent) => (
-                            <option key={agent.id} value={agent.id}>{agent.name}</option>
-                          ))}
-                        </select>
-                      </td>
-                    )}
-                  </tr>
                 ))
               )}
             </tbody>

@@ -2,47 +2,53 @@ import { NextRequest } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { apiError, apiSuccess } from "@/lib/api";
 import { requireRole, applyRoleRateLimit } from "@/lib/request-helpers";
-import { PropertyModel } from "@/models/Property";
-import { USER_ROLES, PROPERTY_STATUS, PROPERTY_TYPE } from "@/types";
+import { LeadModel } from "@/models/Lead";
+import { USER_ROLES, LEAD_STATUS } from "@/types";
 import { publishEvent } from "@/lib/realtime";
+import { logLeadActivity } from "@/lib/activity";
+import { getLeadPriority } from "@/lib/scoring";
 
-function toSafeProperty(property: {
+function toSafeLead(lead: {
   _id: { toString(): string };
-  title: string;
-  address: string;
-  type: string;
-  price: number;
-  area: number;
-  bedrooms: number;
-  bathrooms: number;
-  description: string;
+  name: string;
+  email: string;
+  phone: string;
+  propertyInterest: string;
+  budget: number;
   status: string;
+  notes: string;
   assignedTo: { _id: { toString(): string }; name: string; email: string; role: string } | null;
+  source: string;
+  score: string;
+  followUpDate: Date | null;
+  lastActivityAt: Date;
   createdAt: Date;
   updatedAt: Date;
 }) {
   return {
-    id: property._id.toString(),
-    title: property.title,
-    address: property.address,
-    type: property.type,
-    price: property.price,
-    area: property.area,
-    bedrooms: property.bedrooms,
-    bathrooms: property.bathrooms,
-    description: property.description,
-    status: property.status,
-    assignedTo: property.assignedTo
+    id: lead._id.toString(),
+    name: lead.name,
+    email: lead.email,
+    phone: lead.phone,
+    propertyInterest: lead.propertyInterest,
+    budget: lead.budget,
+    status: lead.status,
+    notes: lead.notes,
+    assignedTo: lead.assignedTo
       ? {
-          id: property.assignedTo._id.toString(),
-          name: property.assignedTo.name,
-          email: property.assignedTo.email,
-          role: property.assignedTo.role,
+          id: lead.assignedTo._id.toString(),
+          name: lead.assignedTo.name,
+          email: lead.assignedTo.email,
+          role: lead.assignedTo.role,
           createdAt: "",
         }
       : null,
-    createdAt: property.createdAt.toISOString(),
-    updatedAt: property.updatedAt.toISOString(),
+    source: lead.source,
+    score: lead.score,
+    followUpDate: lead.followUpDate?.toISOString() || null,
+    lastActivityAt: lead.lastActivityAt.toISOString(),
+    createdAt: lead.createdAt.toISOString(),
+    updatedAt: lead.updatedAt.toISOString(),
   };
 }
 
@@ -69,22 +75,12 @@ export async function GET(request: NextRequest) {
     query.assignedTo = auth.payload.sub;
   }
 
-  const status = request.nextUrl.searchParams.get("status");
-  if (status) {
-    query.status = status;
-  }
-
-  const type = request.nextUrl.searchParams.get("type");
-  if (type) {
-    query.type = type;
-  }
-
-  const properties = await PropertyModel.find(query)
+  const leads = await LeadModel.find(query)
     .populate("assignedTo", "name email role createdAt")
     .sort({ createdAt: -1 });
 
   return apiSuccess({
-    properties: properties.map(toSafeProperty),
+    leads: leads.map(toSafeLead),
   });
 }
 
@@ -125,7 +121,7 @@ export async function POST(request: NextRequest) {
     return apiError("CSV file is empty or invalid", 400);
   }
 
-  const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+  const headers = lines[0].split(",").map((h) => h.trim().toLowerCase().replace(" ", "_"));
   const results: Record<string, string>[] = [];
 
   for (let i = 1; i < lines.length; i++) {
@@ -144,40 +140,45 @@ export async function POST(request: NextRequest) {
     return apiError("No valid data found in CSV", 400);
   }
 
-  const properties = [];
+  const leads = [];
 
   for (const record of results) {
-    const type = record.type?.toLowerCase() || "house";
-    const validType = Object.values(PROPERTY_TYPE).includes(type as typeof PROPERTY_TYPE[keyof typeof PROPERTY_TYPE])
-      ? type
-      : PROPERTY_TYPE.HOUSE;
-
-    properties.push({
-      title: record.title || record.name || "Untitled Property",
-      address: record.address || "",
-      type: validType,
-      price: parseFloat(record.price) || 0,
-      area: parseFloat(record.area || record.size || "0") || 0,
-      bedrooms: parseInt(record.bedrooms || record.beds || "0") || 0,
-      bathrooms: parseInt(record.bathrooms || record.baths || "0") || 0,
-      description: record.description || record.notes || "",
-      status: PROPERTY_STATUS.AVAILABLE,
+    const budget = parseFloat(record.budget) || 0;
+    const score = getLeadPriority(budget);
+    
+    leads.push({
+      name: record.name || "Unknown",
+      email: record.email || "noemail@example.com",
+      phone: record.phone || "923000000000",
+      propertyInterest: record.property_interest || record.propertyinterest || record.property_interest || "Not specified",
+      budget,
+      status: LEAD_STATUS.NEW,
+      notes: record.notes || "",
+      source: record.source || "imported",
+      score,
     });
   }
 
-  const created = await PropertyModel.insertMany(properties);
+  const created = await LeadModel.insertMany(leads);
 
-  for (const prop of created) {
+  for (const lead of created) {
+    await logLeadActivity({
+      leadId: lead._id.toString(),
+      actorId: auth.payload.sub,
+      type: "created",
+      description: `Lead ${lead.name} imported from CSV.`,
+    });
+    
     publishEvent({
       type: "lead_created",
-      leadId: prop._id.toString(),
-      message: `Property ${prop.title} imported.`,
+      leadId: lead._id.toString(),
+      message: `${lead.name} added (${lead.score} priority).`,
     });
   }
 
   return apiSuccess(
     {
-      message: `${created.length} properties imported successfully`,
+      message: `${created.length} leads imported successfully`,
       count: created.length,
     },
     201,
