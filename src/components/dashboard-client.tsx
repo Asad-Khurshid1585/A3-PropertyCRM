@@ -439,21 +439,50 @@ export function DashboardClient({ role }: DashboardClientProps) {
           <p className="mt-1 text-3xl font-bold text-[var(--danger)]">
             {followupSummary.overdueFollowups.length}
           </p>
-          <div className="mt-3 space-y-1 text-sm">
-            {followupSummary.overdueFollowups.slice(0, 5).map((lead) => (
-              <p key={lead.id}>{lead.name}</p>
-            ))}
+          <p className="text-xs text-[var(--muted)] mb-2">Today: {new Date().toLocaleDateString()}</p>
+          <div className="mt-2 space-y-2 text-sm max-h-48 overflow-y-auto">
+            {followupSummary.overdueFollowups.slice(0, 10).map((lead) => {
+              const followUpDate = lead.followUpDate ? new Date(lead.followUpDate) : null;
+              const daysOverdue = followUpDate ? Math.floor((Date.now() - followUpDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+              return (
+                <div key={lead.id} className="flex justify-between items-center border-b border-[var(--surface-2)] pb-1">
+                  <div>
+                    <span className="font-medium">{lead.name}</span>
+                    <span className="text-xs text-[var(--muted)] ml-2">#{lead.id.slice(-4)}</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-[var(--danger)] font-semibold">{daysOverdue} day{daysOverdue !== 1 ? "s" : ""} overdue</div>
+                    <div className="text-xs text-[var(--muted)]">Was: {followUpDate?.toLocaleDateString() || "N/A"}</div>
+                  </div>
+                </div>
+              );
+            })}
+            {followupSummary.overdueFollowups.length === 0 && <p className="text-sm text-[var(--muted)]">No overdue follow-ups</p>}
           </div>
         </div>
         <div className="crm-card p-4">
           <p className="text-sm font-semibold">Stale Leads (No Activity)</p>
-          <p className="mt-1 text-3xl font-bold text-amber-700">
+          <p className="mt-1 text-3xl font-bold text-amber-600">
             {followupSummary.staleLeads.length}
           </p>
-          <div className="mt-3 space-y-1 text-sm">
-            {followupSummary.staleLeads.slice(0, 5).map((lead) => (
-              <p key={lead.id}>{lead.name}</p>
-            ))}
+          <p className="text-xs text-[var(--muted)] mb-2">Today: {new Date().toLocaleDateString()}</p>
+          <div className="mt-2 space-y-2 text-sm max-h-48 overflow-y-auto">
+            {followupSummary.staleLeads.slice(0, 10).map((lead) => {
+              const daysSince = Math.floor((Date.now() - new Date(lead.lastActivityAt).getTime()) / (1000 * 60 * 60 * 24));
+              return (
+                <div key={lead.id} className="flex justify-between items-center border-b border-[var(--surface-2)] pb-1">
+                  <div>
+                    <span className="font-medium">{lead.name}</span>
+                    <span className="text-xs text-[var(--muted)] ml-2">#{lead.id.slice(-4)}</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-amber-600 font-semibold">{daysSince} day{daysSince !== 1 ? "s" : ""} inactive</div>
+                    <div className="text-xs text-[var(--muted)]">Last: {new Date(lead.lastActivityAt).toLocaleDateString()}</div>
+                  </div>
+                </div>
+              );
+            })}
+            {followupSummary.staleLeads.length === 0 && <p className="text-sm text-[var(--muted)]">No stale leads</p>}
           </div>
         </div>
       </section>
