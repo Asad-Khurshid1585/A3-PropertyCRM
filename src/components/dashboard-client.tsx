@@ -611,14 +611,24 @@ export function DashboardClient({ role }: DashboardClientProps) {
         {showImportModal && (
           <div className="mb-4 rounded-lg border border-[var(--brand)] p-4">
             <p className="mb-2 font-semibold">Import Properties from CSV</p>
-            <input
-              type="file"
-              accept=".csv"
-              className="crm-input mb-2"
-              onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-            />
+            <label className="block mb-2">
+              <span className="text-sm text-[var(--muted)]">Select CSV file:</span>
+              <input
+                type="file"
+                accept=".csv"
+                className="block w-full mt-1 p-2 border border-[var(--surface-2)] rounded"
+                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+              />
+            </label>
+            {importFile && <p className="text-sm mb-2">Selected: {importFile.name}</p>}
             <div className="flex gap-2">
-              <button className="crm-button" onClick={importProperties}>Import</button>
+              <button 
+                className="crm-button" 
+                disabled={!importFile}
+                onClick={importProperties}
+              >
+                Import
+              </button>
               <button className="crm-button" onClick={() => { setShowImportModal(false); setImportFile(null); }}>Cancel</button>
             </div>
           </div>
