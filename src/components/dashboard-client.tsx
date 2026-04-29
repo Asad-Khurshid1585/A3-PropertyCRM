@@ -470,22 +470,33 @@ export function DashboardClient({ role }: DashboardClientProps) {
                 key={item.leadId}
                 className="rounded-lg border border-[var(--surface-2)] p-3"
               >
-                <div className="flex items-center gap-2">
-<span
-                      className={`text-xs px-2 py-0.5 rounded ${
-                        item.urgency === "immediate"
-                          ? "bg-red-900 text-red-200"
-                          : item.urgency === "this_week"
-                          ? "bg-yellow-900 text-yellow-200"
-                          : "bg-green-900 text-green-200"
-                      }`}
-                    >
-                    {item.urgency}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded font-semibold ${
+                      item.urgency === "immediate"
+                        ? "bg-red-600 text-white"
+                        : item.urgency === "this_week"
+                        ? "bg-amber-500 text-black"
+                        : "bg-green-600 text-white"
+                    }`}
+                  >
+                    {item.urgency.replace("_", " ")}
+                  </span>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded ${
+                      item.priority === "high"
+                        ? "bg-purple-600 text-white"
+                        : item.priority === "medium"
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-500 text-white"
+                    }`}
+                  >
+                    {item.priority}
                   </span>
                   <span className="font-semibold">{item.leadName}</span>
                 </div>
-                <p className="text-sm text-[var(--muted)] mt-1">{item.reason}</p>
-                <p className="text-sm mt-1">→ {item.suggestedAction}</p>
+                <p className="text-sm text-[var(--foreground)] mt-2 font-medium">{item.reason}</p>
+                <p className="text-sm text-[var(--brand)] mt-1 font-semibold">→ {item.suggestedAction}</p>
               </div>
             ))}
             {aiSuggestions.length === 0 && (
