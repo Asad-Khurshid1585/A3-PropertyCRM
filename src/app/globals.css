@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #121212;
-  --foreground: #e5e5e5;
-  --surface: #1a1a1a;
-  --surface-2: #2a2a2a;
-  --surface-3: #333333;
-  --brand: #808080;
-  --brand-strong: #a0a0a0;
+  --background: #0a0e14;
+  --foreground: #e8eef4;
+  --surface: #151c28;
+  --surface-2: #1c2636;
+  --surface-3: #243044;
+  --brand: #5a7a9a;
+  --brand-strong: #7a9cbd;
   --brand-text: #ffffff;
-  --danger: #991b1b;
-  --danger-strong: #b91c1c;
-  --muted: #737373;
-  --border: #404040;
+  --danger: #7f1d1d;
+  --danger-strong: #991b1b;
+  --muted: #64748b;
+  --border: #2d3a4d;
 }
 
 @theme inline {
@@ -24,8 +24,8 @@
 
 body {
   background:
-    radial-gradient(circle at 10% 10%, #2a2a2a 0%, transparent 40%),
-    radial-gradient(circle at 90% 90%, #1f1f1f 0%, transparent 35%),
+    radial-gradient(circle at 10% 10%, #1c2636 0%, transparent 40%),
+    radial-gradient(circle at 90% 90%, #0f1419 0%, transparent 35%),
     var(--background);
   color: var(--foreground);
   font-family: "Segoe UI", "Trebuchet MS", "Verdana", sans-serif;
@@ -50,7 +50,7 @@ body {
 
 .crm-input:focus {
   border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(128, 128, 128, 0.2);
+  box-shadow: 0 0 0 3px rgba(90, 122, 154, 0.25);
 }
 
 .crm-button {
