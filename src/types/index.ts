@@ -10,7 +10,8 @@ export const LEAD_STATUS = {
   CONTACTED: "contacted",
   ASSIGNED: "assigned",
   IN_PROGRESS: "in_progress",
-  CLOSED: "closed",
+  CLOSED_WON: "closed_won",
+  CLOSED_LOST: "closed_lost",
 } as const;
 
 export type LeadStatus = (typeof LEAD_STATUS)[keyof typeof LEAD_STATUS];

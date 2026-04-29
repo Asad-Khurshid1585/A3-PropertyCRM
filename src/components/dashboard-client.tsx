@@ -356,8 +356,8 @@ export function DashboardClient({ role }: DashboardClientProps) {
               {(() => {
                 const sorted = [...analytics.agentPerformance]
                   .map(agent => {
-                    const won = agent.statuses.find(s => s.status === "closed")?.count || 0;
-                    const lost = agent.totalHandled - won;
+                    const won = agent.statuses.find(s => s.status === "closed_won")?.count || 0;
+                    const lost = agent.statuses.find(s => s.status === "closed_lost")?.count || 0;
                     return { ...agent, won, lost };
                   })
                   .sort((a, b) => b.won - a.won);
@@ -550,7 +550,8 @@ export function DashboardClient({ role }: DashboardClientProps) {
             <option value="assigned">Assigned</option>
             <option value="contacted">Contacted</option>
             <option value="in_progress">In Progress</option>
-            <option value="closed">Closed</option>
+            <option value="closed_won">Closed Won</option>
+            <option value="closed_lost">Closed Lost</option>
           </select>
           <select className="crm-input" value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value)}>
             <option value="">All Priorities</option>
@@ -610,7 +611,8 @@ export function DashboardClient({ role }: DashboardClientProps) {
                           <option value="assigned">Assigned</option>
                           <option value="contacted">Contacted</option>
                           <option value="in_progress">In Progress</option>
-                          <option value="closed">Closed</option>
+                          <option value="closed_won">Closed Won</option>
+                          <option value="closed_lost">Closed Lost</option>
                         </select>
                         <input className="crm-input" type="number" value={editingFields.budget} onChange={(event) => setEditingFields((prev) => ({ ...prev, budget: event.target.value }))} />
                         <input className="crm-input" type="date" value={editingFields.followUpDate} onChange={(event) => setEditingFields((prev) => ({ ...prev, followUpDate: event.target.value }))} />
