@@ -88,6 +88,7 @@ export function DashboardClient({ role }: DashboardClientProps) {
 
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ name: string } | null>(null);
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -129,6 +130,11 @@ export function DashboardClient({ role }: DashboardClientProps) {
     if (role !== "admin") return;
     const data = await fetchJSON<{ agents: AgentUser[] }>("/api/users/agents");
     setAgents(data.agents);
+  };
+
+  const loadUser = async () => {
+    const data = await fetchJSON<{ user: { name: string } }>("/api/auth/me");
+    setCurrentUser(data.user);
   };
 
   const loadAnalytics = async () => {
@@ -246,7 +252,7 @@ export function DashboardClient({ role }: DashboardClientProps) {
   };
 
   useEffect(() => {
-    void Promise.all([loadLeads(), loadAgents(), loadAnalytics(), loadFollowups(), loadAllActivities()]);
+    void Promise.all([loadLeads(), loadAgents(), loadAnalytics(), loadFollowups(), loadAllActivities(), loadUser()]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, role]);
 
@@ -635,7 +641,12 @@ export function DashboardClient({ role }: DashboardClientProps) {
                   <td className="p-2">PKR {lead.budget.toLocaleString()}</td>
                   <td className="p-2">{lead.assignedTo?.name || "Unassigned"}</td>
                   <td className="p-2">
-                    <a className="text-[var(--brand)] underline" href={toWhatsappLink(lead.phone)} target="_blank" rel="noreferrer">
+                    <a
+                      className="text-[var(--brand)] underline"
+                      href={toWhatsappLink(lead.phone, `Hi ${lead.name.split(" ")[0]}, this is ${currentUser?.name || "your agent"} from the property team. I wanted to follow up on your inquiry about ${lead.propertyInterest}. How can I help you?`)}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       Chat
                     </a>
                   </td>

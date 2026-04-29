@@ -2,7 +2,11 @@ export const normalizePhoneNumber = (value: string) => {
   return value.replace(/[^\d]/g, "");
 };
 
-export const toWhatsappLink = (phone: string) => {
+export const toWhatsappLink = (phone: string, message?: string) => {
   const normalized = normalizePhoneNumber(phone);
-  return `https://wa.me/${normalized}`;
+  const base = `https://wa.me/${normalized}`;
+  if (message) {
+    return `${base}?text=${encodeURIComponent(message)}`;
+  }
+  return base;
 };
