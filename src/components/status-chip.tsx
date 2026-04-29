@@ -1,14 +1,14 @@
 export function StatusChip({ status }: { status: string }) {
   const classes =
     status === "closed"
-      ? "bg-slate-200 text-slate-700"
+      ? "bg-zinc-700 text-zinc-300"
       : status === "in_progress"
-        ? "bg-sky-100 text-sky-700"
+        ? "bg-zinc-600 text-zinc-200"
         : status === "assigned"
-          ? "bg-indigo-100 text-indigo-700"
+          ? "bg-neutral-600 text-neutral-200"
           : status === "contacted"
-            ? "bg-teal-100 text-teal-700"
-            : "bg-orange-100 text-orange-700";
+            ? "bg-stone-600 text-stone-200"
+            : "bg-gray-600 text-gray-200";
 
   return (
     <span className={`crm-chip ${classes}`}>

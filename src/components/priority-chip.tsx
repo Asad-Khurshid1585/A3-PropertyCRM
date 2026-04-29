@@ -1,10 +1,10 @@
 export function PriorityChip({ priority }: { priority: string }) {
   const classes =
     priority === "high"
-      ? "bg-rose-100 text-rose-700"
+      ? "bg-red-900 text-red-200"
       : priority === "medium"
-        ? "bg-amber-100 text-amber-700"
-        : "bg-emerald-100 text-emerald-700";
+        ? "bg-yellow-900 text-yellow-200"
+        : "bg-green-900 text-green-200";
 
   return <span className={`crm-chip ${classes}`}>{priority.toUpperCase()}</span>;
 }

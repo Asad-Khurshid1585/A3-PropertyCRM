@@ -409,15 +409,15 @@ export function DashboardClient({ role }: DashboardClientProps) {
                 className="rounded-lg border border-[var(--surface-2)] p-3"
               >
                 <div className="flex items-center gap-2">
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded ${
-                      item.urgency === "immediate"
-                        ? "bg-red-100 text-red-700"
-                        : item.urgency === "this_week"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : "bg-green-100 text-green-700"
-                    }`}
-                  >
+<span
+                      className={`text-xs px-2 py-0.5 rounded ${
+                        item.urgency === "immediate"
+                          ? "bg-red-900 text-red-200"
+                          : item.urgency === "this_week"
+                          ? "bg-yellow-900 text-yellow-200"
+                          : "bg-green-900 text-green-200"
+                      }`}
+                    >
                     {item.urgency}
                   </span>
                   <span className="font-semibold">{item.leadName}</span>
