@@ -158,21 +158,25 @@ export function DashboardClient({ role }: DashboardClientProps) {
   };
 
   const importProperties = async () => {
+    console.log("Import clicked, file:", importFile);
     if (!importFile) {
-      setError("Please select a file first");
+      alert("Please select a file first");
       return;
     }
     try {
       const formData = new FormData();
       formData.append("file", importFile);
       
+      console.log("Sending request...");
       const response = await fetch("/api/properties", {
         method: "POST",
         body: formData,
       });
+      console.log("Response status:", response.status);
       const body = await response.json();
+      console.log("Response body:", body);
       if (!body.success) {
-        setError(body.error || "Import failed");
+        alert(body.error || "Import failed");
         return;
       }
       alert(`Successfully imported ${body.data.count} properties`);
@@ -180,7 +184,8 @@ export function DashboardClient({ role }: DashboardClientProps) {
       setImportFile(null);
       await loadProperties();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Import failed");
+      console.error("Import error:", err);
+      alert("Import failed: " + (err instanceof Error ? err.message : "Unknown error"));
     }
   };
 
@@ -624,8 +629,7 @@ export function DashboardClient({ role }: DashboardClientProps) {
             <div className="flex gap-2">
               <button 
                 className="crm-button" 
-                disabled={!importFile}
-                onClick={importProperties}
+                onClick={() => importProperties()}
               >
                 Import
               </button>
